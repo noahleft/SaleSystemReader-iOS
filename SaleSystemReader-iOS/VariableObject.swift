@@ -16,17 +16,10 @@ import Foundation
 class COMPANY : NSObject {
     var Id : Int
     var Name : String
-    dynamic var DisplayName : String
-    
-    var ValueChanged : Bool {
-        return Name != DisplayName
-    }
-    dynamic var TextColor : NSColor = NSColor.black
     
     init(sqlCom: SQL_COMPANY) {
         Id = sqlCom.Id
         Name = sqlCom.Name
-        DisplayName = sqlCom.Name
         super.init()
         
         registerObserver()
@@ -35,35 +28,21 @@ class COMPANY : NSObject {
     init(aId: Int,aName: String) {
         Id = aId
         Name = aName
-        DisplayName = aName
         super.init()
         
         registerObserver()
     }
     
     func registerObserver() {
-        addObserver(self, forKeyPath: "DisplayName", options: NSKeyValueObservingOptions(rawValue: UInt(0)), context: nil)
+        
     }
     
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        if ValueChanged {
-            TextColor = NSColor.red
-        }
-        else {
-            TextColor = NSColor.black
-        }
         
-        if DisplayName != "" {
-            dataManager.addUpdate(update: SQL_COMPANY(aId: Id, aName: DisplayName))
-            print("add update  Name:\(Name)   DisplayName:\(DisplayName)")
-        }
-        else {
-            DisplayName = Name
-        }
     }
     
     deinit {
-        removeObserver(self, forKeyPath: "DisplayName")
+        
     }
     
 }
