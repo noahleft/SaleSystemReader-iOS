@@ -50,28 +50,12 @@ class COMPANY : NSObject {
 class PRODUCT : NSObject {
     var Id : Int
     var Name : String
-    dynamic var DisplayName : String
     var UnitPrice   : UNITPRICE?
-    dynamic var DisplayUnitPrice : String = ""
     var DisplayIndex : Int = 0
-    
-    var ValueChanged : Bool {
-        return Name != DisplayName
-    }
-    dynamic var TextColor : NSColor = NSColor.black
-    var PriceChanged : Bool {
-        if (UnitPrice != nil) {
-            return DisplayUnitPrice != "\(UnitPrice!.UnitPrice)"
-        }
-        else {
-            return DisplayUnitPrice != ""
-        }
-    }
     
     init(sqlPro: SQL_PRODUCT) {
         Id = sqlPro.Id
         Name = sqlPro.Name
-        DisplayName = sqlPro.Name
         super.init()
         
         registerObserver()
@@ -80,55 +64,21 @@ class PRODUCT : NSObject {
     init(aId: Int,aName: String) {
         Id = aId
         Name = aName
-        DisplayName = aName
         super.init()
         
         registerObserver()
     }
     
     func registerObserver() {
-        addObserver(self, forKeyPath: "DisplayName", options: NSKeyValueObservingOptions(rawValue: UInt(0)), context: nil)
-        addObserver(self, forKeyPath: "DisplayUnitPrice", options: NSKeyValueObservingOptions(rawValue: UInt(0)), context: nil)
+        
     }
     
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        if keyPath == "DisplayName" {
-            if ValueChanged {
-                TextColor = NSColor.red
-            }
-            else {
-                TextColor = NSColor.black
-            }
-            
-            if DisplayName != "" {
-                dataManager.addUpdate(update: SQL_PRODUCT(aId: Id, aName: DisplayName))
-                print("add update  Name:\(Name)   DisplayName:\(DisplayName)")
-            }
-            else {
-                DisplayName = Name
-            }
-        }
-        else if keyPath == "DisplayUnitPrice" {
-            if PriceChanged && (Float(DisplayUnitPrice) != nil) {  // (1)value changes , (2) the value is float, (3) has default value
-                TextColor = NSColor.red
-            }
-            else if !PriceChanged { // value not change and no default value
-                TextColor = NSColor.black
-                return
-            }
-            else if (Float(DisplayUnitPrice) == nil) {  // (1)value changes , (2) the value is not float
-                TextColor = NSColor.brown
-                return
-            }
-            else {
-                TextColor = NSColor.black
-            }
-        }
+        
     }
     
     deinit {
-        removeObserver(self, forKeyPath: "DisplayName")
-        removeObserver(self, forKeyPath: "DisplayUnitPrice")
+        
     }
     
 }
