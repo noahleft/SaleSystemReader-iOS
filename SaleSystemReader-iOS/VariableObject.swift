@@ -107,24 +107,17 @@ class UNITPRICE : NSObject {
 class FORM : NSObject {
     var Id : Int
     var Name : String
-    dynamic var DisplayName : String
-    var ValueChanged : Bool {
-        return Name != DisplayName
-    }
-    dynamic var TextColor : NSColor = NSColor.black
     
     var DisplayIndex : Int = 0
     
     init(sqlForm: SQL_FORM) {
         Id = sqlForm.Id
         Name = sqlForm.Name
-        DisplayName = sqlForm.Name
     }
     
     init(aId: Int,aName: String) {
         Id = aId
         Name = aName
-        DisplayName = aName
     }
 }
 
