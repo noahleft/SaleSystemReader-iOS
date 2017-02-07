@@ -130,46 +130,6 @@ class RECORD : NSObject {
     var DeliverDate : Date
     var UnitPrice : Double
     var Quantity : Int
-    dynamic var DisplayCompIndex : Int
-    dynamic var DisplayProdIndex : Int
-    dynamic var DisplayDeliverDate : Date
-    dynamic var DisplayUnitPrice : String
-    dynamic var DisplayQuantity : String
-    
-    dynamic var DisplayUnitPriceAtDB : String = ""
-    dynamic var TableDisplayCompString : String = ""
-    dynamic var TableDisplayProdString : String = ""
-    dynamic var TableDisplayDeliverDateString : String = ""
-    dynamic var TableDisplayUnitPriceString : String = ""
-    dynamic var TableDisplayQuantityString : String = ""
-    
-    dynamic var TextColorComp  : NSColor = NSColor.black
-    dynamic var TextColorProd  : NSColor = NSColor.black
-    dynamic var TextColorDate  : NSColor = NSColor.black
-    dynamic var TextColorPrice : NSColor = NSColor.black
-    dynamic var TextColorQuan  : NSColor = NSColor.black
-    
-    var isUnsyncData : Bool {
-        return CompId <= 0 || ProdId <= 0
-    }
-    
-    dynamic var enableUnitPriceUpdate : Bool = false
-    
-    func updateEnableUnitPrice() {
-        enableUnitPriceUpdate = DisplayUnitPrice != DisplayUnitPriceAtDB && TableDisplayCompString != "" && TableDisplayProdString != ""
-    }
-    
-    func isComplete() -> Bool {
-        let notEmpty : Bool = TableDisplayCompString != "" && TableDisplayProdString != "" && TableDisplayDeliverDateString != "" && TableDisplayUnitPriceString != "" && TableDisplayQuantityString != ""
-        if notEmpty {
-            if Float(TableDisplayUnitPriceString) != nil {
-                if Int(TableDisplayQuantityString) != nil {
-                    return true
-                }
-            }
-        }
-        return false
-    }
     
     init(sqlRecord: SQL_RECORD) {
         Id = sqlRecord.Id
@@ -181,16 +141,7 @@ class RECORD : NSObject {
         UnitPrice = sqlRecord.UnitPrice
         Quantity = sqlRecord.Quantity
         
-        DisplayCompIndex = dataManager.getCompanyIdx(id: sqlRecord.CompId)
-        DisplayProdIndex = dataManager.getProductIdx(id: sqlRecord.ProdId)
-        DisplayDeliverDate = sqlRecord.DeliverDate
-        DisplayUnitPrice = String(sqlRecord.UnitPrice)
-        DisplayQuantity = String(sqlRecord.Quantity)
-        
         super.init()
-        registerObservers()
-        
-        setupTableDisplay()
     }
     
     init(aId: Int,aCompId: Int,aProdId: Int,aFormId: Int,aCreatedDate: Date,aDeliverDate: Date,aUnitPrice: Double,aQuantity: Int) {
@@ -203,110 +154,19 @@ class RECORD : NSObject {
         UnitPrice = aUnitPrice
         Quantity = aQuantity
         
-        DisplayCompIndex = dataManager.getCompanyIdx(id: aCompId)
-        DisplayProdIndex = dataManager.getProductIdx(id: aProdId)
-        DisplayDeliverDate = aDeliverDate
-        DisplayUnitPrice = String(aUnitPrice)
-        DisplayQuantity = String(aQuantity)
-        
         super.init()
-        registerObservers()
-        
-    }
-    
-    func setupTableDisplay() {
-        TableDisplayCompString = dataManager.getCompanyNameFromListOrder(index: DisplayCompIndex)
-        TableDisplayProdString = dataManager.getProductNameFromListOrder(index: DisplayProdIndex)
-        TableDisplayDeliverDateString = dateFormatterForDisplay(date: DisplayDeliverDate)
-        TableDisplayUnitPriceString = String(DisplayUnitPrice)
-        TableDisplayQuantityString = String(DisplayQuantity)
-        
-        loadUnitPrice()
     }
     
     func registerObservers() {
-        addObserver(self, forKeyPath: "DisplayCompIndex", options: NSKeyValueObservingOptions(rawValue: UInt(0)), context: &contextCompIndex)
-        addObserver(self, forKeyPath: "DisplayProdIndex", options: NSKeyValueObservingOptions(rawValue: UInt(0)), context: &contextProdIndex)
-        addObserver(self, forKeyPath: "DisplayDeliverDate", options: NSKeyValueObservingOptions(rawValue: UInt(0)), context: &contextDeliverDate)
-        addObserver(self, forKeyPath: "DisplayUnitPrice", options: NSKeyValueObservingOptions(rawValue: UInt(0)), context: &contextUnitPrice)
-        addObserver(self, forKeyPath: "DisplayQuantity", options: NSKeyValueObservingOptions(rawValue: UInt(0)), context: &contextQuantity)
+        
     }
     
     func removeObservers() {
-        removeObserver(self, forKeyPath: "DisplayCompIndex")
-        removeObserver(self, forKeyPath: "DisplayProdIndex")
-        removeObserver(self, forKeyPath: "DisplayDeliverDate")
-        removeObserver(self, forKeyPath: "DisplayUnitPrice")
-        removeObserver(self, forKeyPath: "DisplayQuantity")
-    }
-    
-    func loadUnitPrice() {
-        if DisplayCompIndex < 0 || DisplayProdIndex < 0 {
-            DisplayUnitPriceAtDB = "Null"
-            return
-        }
-        let compId = dataManager.getCompany(index: DisplayCompIndex).Id
-        let prodId = dataManager.getProduct(index: DisplayProdIndex).Id
-        if let unitPrice = dataManager.getUnitPrice(compId: compId, prodId: prodId) {
-            DisplayUnitPriceAtDB = String(unitPrice)
-            if isUnsyncData {
-                DisplayUnitPrice = DisplayUnitPriceAtDB
-            }
-        }
-        else {
-            DisplayUnitPriceAtDB = "Null"
-        }
-    }
-    
-    func checkComplete() -> Bool {
-        if isComplete() {
-            // sent record to data manager only if record is complete.
-            let aId = Id
-            let aCompId = dataManager.getCompany(index: DisplayCompIndex).Id
-            let aProdId = dataManager.getProduct(index: DisplayProdIndex).Id
-            let aFormId = FormId
-            let aCreatedDate = Date()
-            let aDeliverDate = DisplayDeliverDate
-            let aUnitPrice = Double(validateString(strline: DisplayUnitPrice))!
-            let aQuantity = Int(validateString(strline: DisplayQuantity))!
-            
-            dataManager.addUpdate(update: SQL_RECORD(aId: aId, aCompId: aCompId, aProdId: aProdId, aFormId: aFormId, aCreatedDate: aCreatedDate, aDeliverDate: aDeliverDate, aUnitPrice: aUnitPrice, aQuantity: aQuantity))
-            return true
-        }
-        return false
+        
     }
     
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        if context == &contextCompIndex {
-            loadUnitPrice()
-            if DisplayCompIndex == dataManager.getCompanyIdx(id: self.CompId) {
-                TextColorComp = NSColor.black
-            }
-            else {
-                TextColorComp = NSColor.red
-            }
-            TableDisplayCompString = dataManager.getCompanyNameFromListOrder(index: DisplayCompIndex)
-        }
-        else if context == &contextProdIndex {
-            loadUnitPrice()
-            TextColorProd = NSColor.red
-            TableDisplayProdString = dataManager.getProductNameFromListOrder(index: DisplayProdIndex)
-        }
-        else if context == &contextDeliverDate {
-            TextColorDate = NSColor.red
-            TableDisplayDeliverDateString = dateFormatterForDisplay(date: DisplayDeliverDate)
-        }
-        else if context == &contextUnitPrice {
-            TextColorPrice = NSColor.red
-            TableDisplayUnitPriceString = validateString(strline: DisplayUnitPrice)
-            updateEnableUnitPrice()
-        }
-        else if context == &contextQuantity {
-            TextColorQuan = NSColor.red
-            TableDisplayQuantityString = validateString(strline: DisplayQuantity)
-        }
         
-        checkComplete()
     }
     
     deinit {
@@ -314,12 +174,3 @@ class RECORD : NSObject {
     }
     
 }
-
-private var contextCompIndex = 0
-private var contextProdIndex = 0
-private var contextDeliverDate = 0
-private var contextUnitPrice = 0
-private var contextQuantity = 0
-
-
-
